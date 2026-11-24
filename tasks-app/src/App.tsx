@@ -1,5 +1,5 @@
-import Login from "./pages/Login";
+import Kanban from "./pages/Kanban";
 
 export default function App() {
-  return <Login />;
+  return <Kanban />;
 }
