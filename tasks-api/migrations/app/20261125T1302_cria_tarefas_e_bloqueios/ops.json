@@ -1,0 +1,348 @@
+[
+  {
+    "id": "table.Task",
+    "label": "Create table \"Task\"",
+    "summary": "Creates table \"Task\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Task"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Task\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Task\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"Task\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"Task\"",
+        "sql": "CREATE TABLE \"public\".\"Task\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"id\" SERIAL NOT NULL,\n  \"priority\" text DEFAULT 'Média' NOT NULL,\n  \"status\" text DEFAULT 'todo' NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamptz(3) NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Task\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"Task\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"Task\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.TaskBlock",
+    "label": "Create table \"TaskBlock\"",
+    "summary": "Creates table \"TaskBlock\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "TaskBlock"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"TaskBlock\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"TaskBlock\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"TaskBlock\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"TaskBlock\"",
+        "sql": "CREATE TABLE \"public\".\"TaskBlock\" (\n  \"blockedId\" int4 NOT NULL,\n  \"blockerId\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"TaskBlock\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"TaskBlock\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"TaskBlock\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "unique.TaskBlock.TaskBlock_blockerId_blockedId_key",
+    "label": "Add unique constraint on \"TaskBlock\" (blockerId, blockedId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "TaskBlock_blockerId_blockedId_key",
+        "table": "TaskBlock"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"TaskBlock_blockerId_blockedId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "TaskBlock_blockerId_blockedId_key",
+          "public",
+          "\"public\".\"TaskBlock\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"TaskBlock_blockerId_blockedId_key\" on \"TaskBlock\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"TaskBlock_blockerId_blockedId_key\"",
+        "sql": "ALTER TABLE \"public\".\"TaskBlock\" ADD CONSTRAINT \"TaskBlock_blockerId_blockedId_key\" UNIQUE (\"blockerId\", \"blockedId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"TaskBlock_blockerId_blockedId_key\" exists on (blockerId, blockedId)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "TaskBlock_blockerId_blockedId_key",
+          "public",
+          "\"public\".\"TaskBlock\"",
+          "u",
+          "[\"blockerId\",\"blockedId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.TaskBlock.TaskBlock_blockedId_idx_e3047657",
+    "label": "Create index \"TaskBlock_blockedId_idx_e3047657\" on \"TaskBlock\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "TaskBlock_blockedId_idx_e3047657",
+        "table": "TaskBlock"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"TaskBlock_blockedId_idx_e3047657\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"TaskBlock_blockedId_idx_e3047657\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"TaskBlock_blockedId_idx_e3047657\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"TaskBlock_blockedId_idx_e3047657\"",
+        "sql": "CREATE INDEX \"TaskBlock_blockedId_idx_e3047657\" ON \"public\".\"TaskBlock\" (\"blockedId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"TaskBlock_blockedId_idx_e3047657\" exists on \"TaskBlock\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"TaskBlock_blockedId_idx_e3047657\"",
+          "i",
+          "I",
+          "\"public\".\"TaskBlock\"",
+          "btree",
+          "[\"blockedId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.TaskBlock.TaskBlock_blockerId_idx_a25bd35c",
+    "label": "Create index \"TaskBlock_blockerId_idx_a25bd35c\" on \"TaskBlock\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "TaskBlock_blockerId_idx_a25bd35c",
+        "table": "TaskBlock"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"TaskBlock_blockerId_idx_a25bd35c\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"TaskBlock_blockerId_idx_a25bd35c\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"TaskBlock_blockerId_idx_a25bd35c\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"TaskBlock_blockerId_idx_a25bd35c\"",
+        "sql": "CREATE INDEX \"TaskBlock_blockerId_idx_a25bd35c\" ON \"public\".\"TaskBlock\" (\"blockerId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"TaskBlock_blockerId_idx_a25bd35c\" exists on \"TaskBlock\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"TaskBlock_blockerId_idx_a25bd35c\"",
+          "i",
+          "I",
+          "\"public\".\"TaskBlock\"",
+          "btree",
+          "[\"blockerId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.TaskBlock.TaskBlock_blockerId_fkey",
+    "label": "Add foreign key \"TaskBlock_blockerId_fkey\" on \"TaskBlock\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "TaskBlock_blockerId_fkey",
+        "table": "TaskBlock"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"TaskBlock_blockerId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "TaskBlock_blockerId_fkey",
+          "public",
+          "\"public\".\"TaskBlock\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"TaskBlock_blockerId_fkey\" on \"TaskBlock\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"TaskBlock_blockerId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"TaskBlock\"\nADD CONSTRAINT \"TaskBlock_blockerId_fkey\"\nFOREIGN KEY (\"blockerId\")\nREFERENCES \"public\".\"Task\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"TaskBlock_blockerId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "TaskBlock_blockerId_fkey",
+          "public",
+          "\"public\".\"TaskBlock\"",
+          "f",
+          "[\"blockerId\"]",
+          "\"public\".\"Task\"",
+          "[\"id\"]",
+          "c",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.TaskBlock.TaskBlock_blockedId_fkey",
+    "label": "Add foreign key \"TaskBlock_blockedId_fkey\" on \"TaskBlock\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "TaskBlock_blockedId_fkey",
+        "table": "TaskBlock"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"TaskBlock_blockedId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "TaskBlock_blockedId_fkey",
+          "public",
+          "\"public\".\"TaskBlock\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"TaskBlock_blockedId_fkey\" on \"TaskBlock\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"TaskBlock_blockedId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"TaskBlock\"\nADD CONSTRAINT \"TaskBlock_blockedId_fkey\"\nFOREIGN KEY (\"blockedId\")\nREFERENCES \"public\".\"Task\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"TaskBlock_blockedId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "TaskBlock_blockedId_fkey",
+          "public",
+          "\"public\".\"TaskBlock\"",
+          "f",
+          "[\"blockedId\"]",
+          "\"public\".\"Task\"",
+          "[\"id\"]",
+          "c",
+          "a"
+        ]
+      }
+    ]
+  }
+]
