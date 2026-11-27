@@ -1,0 +1,56 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
+-- CreateTable
+CREATE TABLE "User" (
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "email" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "passwordHash" TEXT NOT NULL,
+    "role" TEXT NOT NULL DEFAULT 'LEITOR',
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Task" (
+    "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "description" TEXT,
+    "id" SERIAL NOT NULL,
+    "priority" TEXT NOT NULL DEFAULT 'Média',
+    "status" TEXT NOT NULL DEFAULT 'todo',
+    "title" TEXT NOT NULL,
+    "updatedAt" TIMESTAMPTZ(3) NOT NULL,
+
+    CONSTRAINT "Task_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "TaskBlock" (
+    "blockedId" INTEGER NOT NULL,
+    "blockerId" INTEGER NOT NULL,
+    "id" SERIAL NOT NULL,
+
+    CONSTRAINT "TaskBlock_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE INDEX "TaskBlock_blockedId_idx_e3047657" ON "TaskBlock"("blockedId");
+
+-- CreateIndex
+CREATE INDEX "TaskBlock_blockerId_idx_a25bd35c" ON "TaskBlock"("blockerId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "TaskBlock_blockerId_blockedId_key" ON "TaskBlock"("blockerId", "blockedId");
+
+-- AddForeignKey
+ALTER TABLE "TaskBlock" ADD CONSTRAINT "TaskBlock_blockedId_fkey" FOREIGN KEY ("blockedId") REFERENCES "Task"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "TaskBlock" ADD CONSTRAINT "TaskBlock_blockerId_fkey" FOREIGN KEY ("blockerId") REFERENCES "Task"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
