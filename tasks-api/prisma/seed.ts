@@ -18,6 +18,26 @@ async function main() {
     create: { name: "Editor", email, passwordHash, role: "EDITOR" },
   });
 
+    const taskCount = await prisma.task.count();
+
+  if (taskCount === 0) {
+    const modelar = await prisma.task.create({
+      data: { title: "Modelar o banco", priority: "Alta", status: "doing" },
+    });
+
+    const criarApi = await prisma.task.create({
+      data: { title: "Criar a API", priority: "Alta" },
+    });
+
+    await prisma.task.create({
+      data: { title: "Escrever o README", priority: "Baixa" },
+    });
+
+    await prisma.taskBlock.create({
+      data: { blockerId: modelar.id, blockedId: criarApi.id },
+    });
+  }
+
   console.log("Primeiro Editor pronto:", email);
 }
 
