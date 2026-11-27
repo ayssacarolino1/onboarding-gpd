@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "tsx src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
     "migrate:dev": "prisma migrate dev",
     "generate": "prisma generate",
     "studio": "prisma studio",
@@ -33,7 +33,7 @@
     "@types/pg": "^8.15.6",
     "prisma": "7.10.1",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.2"
   }
-
 }

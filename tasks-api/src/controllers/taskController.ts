@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import prisma from "../lib/prisma.js";
+import { wouldCreateCycle } from "../lib/cycles.js";
+import { pendingBlockers } from "../lib/blocking.js";
 
 const PRIORITIES = ["Alta", "Média", "Baixa"];
 
@@ -161,27 +163,10 @@ export async function addBlocker(req: Request, res: Response) {
       return res.status(409).json({ message: "Este bloqueio já existe." });
     }
 
-    // Ciclo: a partir de "id", seguindo quem ela bloqueia, chegamos em "blockerId"?
     const allBlocks = await prisma.taskBlock.findMany();
-    const blocksMap = new Map<number, number[]>();
 
-    for (const b of allBlocks) {
-      blocksMap.set(b.blockerId, [...(blocksMap.get(b.blockerId) ?? []), b.blockedId]);
-    }
-
-    const visited = new Set<number>();
-    const stack = [id];
-
-    while (stack.length > 0) {
-      const current = stack.pop()!;
-
-      if (current === blockerId) {
-        return res.status(409).json({ message: "Este bloqueio criaria um ciclo." });
-      }
-
-      if (visited.has(current)) continue;
-      visited.add(current);
-      stack.push(...(blocksMap.get(current) ?? []));
+    if (wouldCreateCycle(allBlocks, blockerId, id)) {
+      return res.status(409).json({ message: "Este bloqueio criaria um ciclo." });
     }
 
     const block = await prisma.taskBlock.create({
@@ -241,18 +226,22 @@ export async function moveTask(req: Request, res: Response) {
       return res.status(404).json({ message: "Tarefa não encontrada." });
     }
 
-    if (task.status === "todo" && status !== "todo") {
-      const pending = await prisma.taskBlock.findMany({
-        where: { blockedId: id, blocker: { status: { not: "done" } } },
-        include: { blocker: { select: { id: true, title: true, status: true } } },
-      });
+    const blockers = await prisma.taskBlock.findMany({
+      where: { blockedId: id },
+      include: { blocker: { select: { id: true, title: true, status: true } } },
+    });
 
-      if (pending.length > 0) {
-        return res.status(409).json({
-          message: "Esta tarefa está bloqueada por tarefas ainda não concluídas.",
-          blockers: pending.map((p) => p.blocker),
-        });
-      }
+    const pending = pendingBlockers(
+      task.status,
+      status,
+      blockers.map((b) => b.blocker),
+    );
+
+    if (pending.length > 0) {
+      return res.status(409).json({
+        message: "Esta tarefa está bloqueada por tarefas ainda não concluídas.",
+        blockers: pending,
+      });
     }
 
     const updated = await prisma.task.update({ where: { id }, data: { status } });
